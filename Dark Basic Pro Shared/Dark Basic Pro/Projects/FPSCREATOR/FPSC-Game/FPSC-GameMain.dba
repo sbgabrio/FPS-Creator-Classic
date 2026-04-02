@@ -76,14 +76,11 @@ if gtestgamemodefromeditor=0 and gcompilestandaloneexe=0
   rem FPSCV105RC2 - 100307 - AND puts the actual HOSTable IP address in serveripaddress$
   gosub _ai_gamelist_checkforfirewall
   `
-  rem FPSCV105RC3 - 140307 - also gather the local IP (in case they want a LAN game) ;localipaddress$;
-  MULTIPLAYER CREATE TCP SERVER servername$
+  rem LAN-only: session already established by _multi_earlyinit, just read IP
   localipaddress$=MULTIPLAYER GET IP ADDRESS()
-  if left$(localipaddress$,8)<>"192.168." then localipaddress$=""
-  for c=1 to len(serveripaddress$)
+  for c=1 to len(localipaddress$)
    if mid$(localipaddress$,c)=":" then localipaddress$=left$(localipaddress$,c-1) : exit
   next c
-  MULTIPLAYER DISCONNECT
   `
   rem OLD WAY
   remstart

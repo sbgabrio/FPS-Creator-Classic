@@ -355,153 +355,39 @@ return
 
 _ai_gamelist_add:
  `
- rem server adds to gamelist, uses addip$ and addname$
- action$="action=add&"
- serverid$="server_id="+guniquegamecode$+"&"
- ip$="ip="+addip$+"&" : ipfromadd$=ip$
- title$="title="+addname$+"&"
- data$="data=none"
- HTTP CONNECT strarr$(619)
- tryattempts=10
- repeat
-  tryagain=0
-  idfromadd$=HTTP REQUEST DATA("POST", "gamehost/index.php",action$+serverid$+ip$+title$+data$)
-  if val(idfromadd$)=0 then tryagain=1
-  dec tryattempts
- until tryagain=0 or tryattempts<=0
- HTTP DISCONNECT
+ rem LAN-only: no external gamelist server
  `
 return
 
 _ai_gamelist_delete:
  `
- rem server deletes from gamelist
- HTTP CONNECT strarr$(619)
- tryattempts=10
- repeat
-  tryagain=0
-  action$="action=delete&"
-  serverid$="server_id="+guniquegamecode$+"&"
-  return$=HTTP REQUEST DATA("POST", "gamehost/index.php",action$+serverid$+ipfromadd$+"id="+idfromadd$)
-  if return$="1" then serverhasremoveditselffromonlinelist=1
-  if return$<>"1" then tryagain=1
-  dec tryattempts
- until tryagain=0 or tryattempts<=0
- HTTP DISCONNECT
+ rem LAN-only: no external gamelist server
  `
 return
 
 _ai_gamelist_keepalive:
  `
- rem send this to keep game item listed in database
- HTTP CONNECT strarr$(619)
- action$="action=keepalive&"
- serverid$="server_id="+guniquegamecode$+"&"
- return$=HTTP REQUEST DATA("POST", "gamehost/index.php",action$+serverid$+ipfromadd$+"id="+idfromadd$)
- HTTP DISCONNECT
+ rem LAN-only: no external gamelist server
  `
 return
 
 _ai_gamelist_refresh:
  `
- rem client views gamelist choices, fill array
- HTTP CONNECT strarr$(619)
- tryattempts=10
- repeat
-  tryagain=0
-  action$="action=list&"
-  serverid$="server_id="+guniquegamecode$
-  return$=HTTP REQUEST DATA("POST", "gamehost/index.php",action$+serverid$)
-  if return$<>""
-   c=1 : hudiplistmax=-1 : fromc=0
-   repeat
-    if asc(mid$(return$,c))=10
-     if fromc>0
-      thudiplist$=left$(return$,c-1)
-      thudiplist$=right$(thudiplist$,len(thudiplist$)-fromc)
-     else
-      thudiplist$=left$(return$,c-1)
-     endif
-     for c1=1 to len(thudiplist$)
-      if mid$(thudiplist$,c1)="," then exit
-     next c1
-     thudiplist1$=left$(thudiplist$,c1-1)
-     thudiplist$=right$(thudiplist$,len(thudiplist$)-(c1))
-     for c2=1 to len(thudiplist$)
-      if mid$(thudiplist$,c2)="," then exit
-     next c2
-     thudiplist2$=left$(thudiplist$,c2-1)
-     thudiplist$=right$(thudiplist$,len(thudiplist$)-(c2))
-     for c3=1 to len(thudiplist$)
-      if mid$(thudiplist$,c3)="," then exit
-     next c3
-     thudiplist3$=left$(thudiplist$,c3-1)
-     thudiplist$=right$(thudiplist$,len(thudiplist$)-(c3))
-     for c4=1 to len(thudiplist$)
-      if mid$(thudiplist$,c4)="," then exit
-     next c4
-     thudiplist4$=left$(thudiplist$,c4-1)
-     thudiplist$=right$(thudiplist$,len(thudiplist$)-(c4))
-`     if thudiplist1$=thisgamecode$
-      inc hudiplistmax
-      hudiplist$(hudiplistmax,0)=thudiplist4$
-      hudiplist$(hudiplistmax,1)=thudiplist3$
- `    endif
-     fromc=c+1
-    else
-     rem skip char, finding end
-    endif
-    inc c
-   until c>len(return$)
-  else
-   tryagain=1
-   dec tryattempts
-  endif
- until tryagain=0 or tryattempts<=0
- HTTP DISCONNECT
+ rem LAN-only: no external gamelist server
  `
 return
 
 _ai_gamelist_checkforfirewall:
  `
- rem FSCV105RC2 - server has a script to give is the real machine IP
- `http://www.fpscreator.com/gamehost/whatismyip.php
+ rem LAN-only: skip external gamelist server, get local IP directly
  serveripaddress$=""
+ errorcode$=""
  `
- rem added for 090307
- rem check three times to connect to FPSC gamelist server
- HTTP CONNECT strarr$(619)
- tryattempts=3
- repeat
-  action$=""
-  return$=HTTP REQUEST DATA("POST", "gamehost/whatismyip.php",action$)
-  errorcodestring$=return$
-  return$=lower$(return$)
-  checkfor$="error code"
-  if return$<>""
-   for n=0 to len(return$)-len(checkfor$)-1
-    if left$(right$(return$,(len(return$)-n)),len(checkfor$))=checkfor$
-     rem error code returned when attempted to access HTTP command
-     errorcode$=errorcodestring$
-    endif
-   next n
-   if errorcode$="" and len(return$)>0
-    rem FPSCV105RC2 - 100307 - puts the actual HOSTable IP address in serveripaddress$
-    serveripaddress$=return$
-    tryattempts=0
-   endif
-  endif
-  dec tryattempts
- until tryattempts<=0 or len(errorcode$)=0
- HTTP DISCONNECT
- `
- rem if fail, report and exit
- if errorcode$<>""
-  s$="Failed to establish a connection with the gamelist server. "
-  s$=s$+"This could be caused by loss of internet connectivity, or the presence of a firewall."
-  exit prompt s$,errorcode$
-  end
- endif
+ rem _multi_earlyinit has already established the session so GET IP ADDRESS works
+ serveripaddress$=MULTIPLAYER GET IP ADDRESS()
+ for c=1 to len(serveripaddress$)
+  if mid$(serveripaddress$,c)=":" then serveripaddress$=left$(serveripaddress$,c-1) : exit
+ next c
  `
 return
 
