@@ -1404,27 +1404,23 @@ _common:
      if dwCode=101
       rem Choose which character you want to be
       numberofplayers=memblock byte( mb_move, 4 )
-      if numberofplayers>0
-       tdwplr as DWORD
-       for tcc=0 to numberofplayers-1
-        tdwplr=memblock dword( mb_move, 5+(tcc*5) )
-        tcl=memblock byte( mb_move, 9+(tcc*5) )
-        el=getelfromid(tdwplr) : characterchosen(el)=tcl
-        gosub _multi_identifycharactersinentities
-        characterchoiceentityindex(el)=characterlistentity(tcl)
-       next tcc
-       rem select from character selection screen
-       gosub _multi_andwho
-       rem client asks server if can use this character
-       MULTIPLAYER SEND FROM PLAYER dwPlayerID
-       write memblock byte 102, 0, 3
-       write memblock dword 102, 4, characterchoice
-       MULTIPLAYER SEND MESSAGE memblock 102,0x0080,8
-       inc guarenteedbytes,8 : inc unreliablebytes,0
-      else
-       rem odd error server has a game of zero players
-       exit prompt "MPError","Zero Players" : end
-      endif
+      rem record existing player character choices sent by server
+      tdwplr as DWORD
+      for tcc=0 to numberofplayers-1
+       tdwplr=memblock dword( mb_move, 5+(tcc*5) )
+       tcl=memblock byte( mb_move, 9+(tcc*5) )
+       el=getelfromid(tdwplr) : characterchosen(el)=tcl
+       gosub _multi_identifycharactersinentities
+       characterchoiceentityindex(el)=characterlistentity(tcl)
+      next tcc
+      rem select from character selection screen (_multi_andwho handles 0-player case gracefully)
+      gosub _multi_andwho
+      rem client asks server if can use this character
+      MULTIPLAYER SEND FROM PLAYER dwPlayerID
+      write memblock byte 102, 0, 3
+      write memblock dword 102, 4, characterchoice
+      MULTIPLAYER SEND MESSAGE memblock 102,0x0080,8
+      inc guarenteedbytes,8 : inc unreliablebytes,0
      endif
      rem READY - client is told if it can use the selected character
      if dwCode=102
@@ -2543,12 +2539,8 @@ _multi_andwho:
    sync
   until characterchoice>=1 and characterchoice<=numberofplayers
  else
-  rem choose only character (if any)
-  if numberofplayers=1
-   characterchoice=1
-  else
-   characterchoice=0
-  endif
+  rem 0 or 1 character: auto-select; never leave characterchoice=0
+  characterchoice=1
  endif
  `
  rem restore text to in-game style and size
