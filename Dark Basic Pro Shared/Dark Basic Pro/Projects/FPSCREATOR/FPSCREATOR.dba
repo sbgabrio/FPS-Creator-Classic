@@ -1953,6 +1953,7 @@ global ggodmodestate : ggodmodestate=0
 global glevelmax : glevelmax=1
 global level : level=1
 global glocalserveroverride$ : glocalserveroverride$=""
+global glanonlygame : glanonlygame=1
 global gbloodonfloor : gbloodonfloor=0
 global gimageblockmode : gimageblockmode=0
 global gxbox : gxbox=0
@@ -2159,6 +2160,7 @@ if file exist(tfile$)=1
     tryfield$="producelogfiles" : if field$=tryfield$ then gproducelogfiles=value1
     tryfield$="exportassets" : if field$=tryfield$ then gexportassets=value1
     tryfield$="localserver" : if field$=tryfield$ then glocalserveroverride$=value$
+    tryfield$="lanonlygame" : if field$=tryfield$ then glanonlygame=value1
     `
     rem all FPI screens
     tryfield$="title" : if field$=tryfield$ then titlefpi$=value$
