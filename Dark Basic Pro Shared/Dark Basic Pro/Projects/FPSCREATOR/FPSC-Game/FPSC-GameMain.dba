@@ -76,30 +76,30 @@ if gtestgamemodefromeditor=0 and gcompilestandaloneexe=0
   rem FPSCV105RC2 - 100307 - AND puts the actual HOSTable IP address in serveripaddress$
   gosub _ai_gamelist_checkforfirewall
   `
-  rem LAN-only: session already established by _multi_earlyinit, just read IP
-  localipaddress$=MULTIPLAYER GET IP ADDRESS()
-  for c=1 to len(localipaddress$)
-   if mid$(localipaddress$,c)=":" then localipaddress$=left$(localipaddress$,c-1) : exit
-  next c
-  `
-  rem OLD WAY
-  remstart
-  rem get IP
+  rem get IP address (LAN-only: session is already live; online: probe via temp server)
   timestampactivity(0,"Getting serveripaddress$..")
-  if serveripaddress$=""
-   MULTIPLAYER CREATE TCP SERVER servername$
-   if len(glocalserveroverride$)=0
-    serveripaddress$=MULTIPLAYER GET IP ADDRESS()
-    for c=1 to len(serveripaddress$)
-     if mid$(serveripaddress$,c)=":" then serveripaddress$=left$(serveripaddress$,c-1) : exit
-    next c
-   else
-    serveripaddress$=glocalserveroverride$
+  if glanonlygame=1
+   rem LAN-only: session already established by _multi_earlyinit, read IP directly
+   localipaddress$=MULTIPLAYER GET IP ADDRESS()
+   for c=1 to len(localipaddress$)
+    if mid$(localipaddress$,c)=":" then localipaddress$=left$(localipaddress$,c-1) : exit
+   next c
+  else
+   rem Online mode: create temp server to probe IP, then disconnect
+   if serveripaddress$=""
+    MULTIPLAYER CREATE TCP SERVER servername$
+    if len(glocalserveroverride$)=0
+     serveripaddress$=MULTIPLAYER GET IP ADDRESS()
+     for c=1 to len(serveripaddress$)
+      if mid$(serveripaddress$,c)=":" then serveripaddress$=left$(serveripaddress$,c-1) : exit
+     next c
+    else
+     serveripaddress$=glocalserveroverride$
+    endif
+    MULTIPLAYER DISCONNECT
    endif
-   MULTIPLAYER DISCONNECT
   endif
   timestampactivity(0,"serveripaddress$="+serveripaddress$)
-  remend
   `
   rem done with network stuff for now
   hide mouse
