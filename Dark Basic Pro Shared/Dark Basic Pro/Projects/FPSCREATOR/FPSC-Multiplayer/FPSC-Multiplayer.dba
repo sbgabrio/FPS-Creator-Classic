@@ -2510,7 +2510,7 @@ _multi_andwho:
  rem first determine which entities the characters are
  gosub _multi_identifycharactersinentities
  `
- rem who is left
+ rem mark which characters are already taken by other players
  characterlist(0)=0
  for tcl=1 to multiplayermax
   characterlist(tcl)=0
@@ -2525,31 +2525,101 @@ _multi_andwho:
  set text size 12+((screen width()-320.0)/320.0)*6.0
  set text to normal
  `
+ rem default highlight to first available (untaken) character
+ tpreviewchar=0
+ for tcl=1 to numberofplayers
+  if characterlist(tcl)=0 and tpreviewchar=0 then tpreviewchar=tcl
+ next tcl
+ if tpreviewchar=0 then tpreviewchar=1
+ tarrowleft=0 : tarrowright=0
+ `
  rem offer choice
  gap#=screen height()/20
  characterchoice=0
  if numberofplayers>=2
   repeat
+   `
+   rem black overlay so text is always visible over the 3D scene
+   ink rgb(0,0,0),0
+   box 0,0,screen width(),screen height()
+   `
+   rem title
    t$=strarr$(641)
-   ink rgb(0,0,0),0 : center text screen width()/2,(gap#*2),t$
-   ink rgb(255,255,255),0 : center text (screen width()/2)-1,(gap#*2)-1,t$
+   ink rgb(255,200,0),0
+   center text screen width()/2,screen height()/2-(numberofplayers*gap#/2)-gap#,t$
+   `
+   rem character list: highlight current preview, grey out taken
    for tcl=1 to numberofplayers
     t$=str$(tcl)+". "+characterlist$(tcl)
-    ink rgb(0,0,0),0 : center text screen width()/2,(gap#*5)+((tcl-1)*gap#),t$
-    if characterlist(tcl)=0 then ink rgb(255,255,255),0 else ink rgb(64,64,64),0
-    center text (screen width()/2)-1,(gap#*5)+((tcl-1)*gap#)-1,t$
+    if tcl=tpreviewchar
+     ink rgb(255,255,0),0
+    else
+     if characterlist(tcl)=0
+      ink rgb(200,200,200),0
+     else
+      ink rgb(70,70,70),0
+     endif
+    endif
+    center text screen width()/2,screen height()/2+((tcl-1)*gap#)-(numberofplayers*gap#/2),t$
    next tcl
-   k$=inkey$() : if k$>="1" and k$<="8" then characterchoice=(asc(k$)-asc("0"))
+   `
+   rem instructions
+   ink rgb(160,160,160),0
+   center text screen width()/2,screen height()/2+(numberofplayers*gap#/2)+gap#/2,"[< >] or [1-"+str$(numberofplayers)+"]  browse    ENTER or number to confirm"
+   `
+   rem ENTER confirms highlighted selection if not taken
+   k$=inkey$()
+   if k$=chr$(13)
+    if characterlist(tpreviewchar)=0 then characterchoice=tpreviewchar
+   endif
+   rem number key: move highlight and confirm if not taken
+   if k$>="1" and k$<="8"
+    tpick=(asc(k$)-asc("0"))
+    if tpick>=1 and tpick<=numberofplayers
+     tpreviewchar=tpick
+     if characterlist(tpick)=0 then characterchoice=tpick
+    endif
+   endif
+   `
+   rem left arrow cycles backward
+   if keystate(203)=1 and tarrowleft=0
+    tarrowleft=1
+    tpick=tpreviewchar-1
+    if tpick<1 then tpick=numberofplayers
+    tpreviewchar=tpick
+   endif
+   if keystate(203)=0 then tarrowleft=0
+   `
+   rem right arrow cycles forward
+   if keystate(205)=1 and tarrowright=0
+    tarrowright=1
+    tpick=tpreviewchar+1
+    if tpick>numberofplayers then tpick=1
+    tpreviewchar=tpick
+   endif
+   if keystate(205)=0 then tarrowright=0
+   `
    sync
-  until characterchoice>=1 and characterchoice<=numberofplayers
+  until characterchoice>=1 and characterchoice<=numberofplayers and characterlist(characterchoice)=0
+  rem flush keyboard buffer
+  while inkey$()<>"" : sync : endwhile
  else
-  rem choose only character (if any)
-  if numberofplayers=1
-   characterchoice=1
-  else
-   characterchoice=0
-  endif
+  rem 0 or 1 character: auto-select; never leave characterchoice=0
+  characterchoice=1
  endif
+ `
+ rem hide all character objects so the game loop owns visibility from scratch
+ for te=1 to entityelementlist
+  tentid=entityelement(te).bankindex
+  if entityprofile(tentid).ischaracter=1
+   tobj=entityelement(te).obj
+   if tobj>0
+    if object exist(tobj)=1
+     hide object tobj
+    endif
+   endif
+  endif
+ next te
  `
  rem restore text to in-game style and size
  set text size 16 : set text to normal
