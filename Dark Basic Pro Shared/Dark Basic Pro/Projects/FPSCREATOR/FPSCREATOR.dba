@@ -2161,6 +2161,7 @@ if file exist(tfile$)=1
     tryfield$="exportassets" : if field$=tryfield$ then gexportassets=value1
     tryfield$="localserver" : if field$=tryfield$ then glocalserveroverride$=value$
     tryfield$="lanonlygame" : if field$=tryfield$ then glanonlygame=value1
+    tryfield$="lanonly" : if field$=tryfield$ then glanonlygame=value1
     `
     rem all FPI screens
     tryfield$="title" : if field$=tryfield$ then titlefpi$=value$
